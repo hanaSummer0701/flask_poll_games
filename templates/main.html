@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <!-- Google Fonts 링크 추가 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <!-- Font Awesome 아이콘 추가 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- 외부 CSS 파일 링크 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body class="main-page">
+    <h1>안녕하세요. 게임을 시작합니다!</h1>
+    <p>Start 버튼을 눌러 게임을 시작하세요</p>
+    <form action="{{ url_for('start_game') }}" method="get">
+        <button type="submit">Start</button>
+    </form>
+
+    <!-- 관리자 페이지로 이동하는 집 모양 아이콘 버튼 -->
+    <a href="{{ url_for('admin_page') }}" class="admin-button">
+        <i class="fas fa-home"></i>
+    </a>
+</body>
+</html>
