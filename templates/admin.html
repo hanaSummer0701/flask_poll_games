@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')}}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='js/plotly-setup.js') }}"></script>
+    <style>
+        .completion-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        /* QR 코드 숨김 처리 */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="h1">관리자 페이지</h1>
+    <div class="status">
+        게임을 끝낸 사람 수: <span id="completed-count">{{ completed_users }}</span>/30
+    </div>
+    <div id="completion-message" class="completion-message" style="display: none;">
+        투표가 종료되었습니다. 참여해 주셔서 감사합니다.
+    </div>
+    
+    <!-- QR 코드 이미지 표시 (처음엔 기존 QR 코드 표시) -->
+    <h2 class="h2">게임 QR 코드</h2>
+    <img id="qr-code" src="{{ url_for('static', filename='admin_qr_code.png') }}" alt="Game QR Code" class="centered-image">
+    
+    <!-- 버튼들을 포함할 컨테이너 -->
+    <div class="button-container">
+        <!-- 메인 페이지 이동 버튼 -->
+        <div class="main-button-container">
+            <a href="{{ url_for('main_page') }}" class="main-button">메인 페이지로 이동</a>
+        </div>
+
+        <!-- 게임 종료 버튼 -->
+        <div class="end-button-container">
+            <button class="end-button" onclick="endGame()" id="end-game-button">게임 종료</button>
+        </div>
+        <!-- 유저 정보 초기화 버튼 -->
+        <div class="reset-button-container">
+            <form action="{{ url_for('reset_users') }}" method="POST">
+                <button type="submit" class="end-button">게임 초기화</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 각 게임에 대해 차트를 표시할 위치 -->
+    <div class="chart-row">
+        {% for game in game_sequence %}
+        <div class="chart-container">
+            <h2 class="chart-title">Game{{ loop.index }} 결과</h2>
+            <div id="chart-{{ game }}"></div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        let timerInterval; // 타이머 ID를 전역 변수로 선언하여 접근 가능하도록 설정
+
+        function updateStatus() {
+            fetch('/admin_status')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('completed-count').innerText = data.completed;
+                if (data.completed == 30) {
+                    document.getElementById('completion-message').style.display = 'block';
+                }
+            });
+        }
+        setInterval(updateStatus, 500);  // 500ms마다 상태 업데이트
+
+        // 타이머를 업데이트하는 함수
+         function startTimer(duration, display) {
+            let timer = duration, minutes, seconds;
+            timerInterval = setInterval(function () {  // 타이머 ID를 변수에 저장
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    timer = 0;
+                }
+            }, 1000);
+        } 
+
+        function endGame() {
+            const button = document.getElementById('end-game-button');
+            button.disabled = true;
+
+            fetch('/generate_qr_code', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                // 기존 QR 코드 숨기기
+                const qrCodeElement = document.getElementById('qr-code');
+                qrCodeElement.classList.add('hidden');
+
+                // 새로 생성된 QR 코드로 교체
+                qrCodeElement.src = `/${data.qr_code_url}`;
+                qrCodeElement.classList.remove('hidden');
+
+                // 타이머 중지
+                clearInterval(timerInterval); // 타이머를 멈추는 코드
+                
+                // 알람 표시
+                alert("게임이 종료되었습니다.");
+            })
+            .catch(() => {
+                alert("게임 종료에 실패했습니다.");
+            });
+        }
+
+        window.onload = function() {
+            const gameSequence = JSON.parse('{{ game_sequence | tojson | safe }}');
+            initializeCharts(gameSequence);
+            const threeMinutes = 180000;
+            const display = document.querySelector('#timer');
+            startTimer(threeMinutes, display);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            if (success === 'true') {
+                document.getElementById('completion-message').style.display = 'block';
+            }
+
+            setTimeout(function() {
+                document.getElementById('completion-message').style.display = 'block';
+            }, 18200000);
+        };
+    </script>
+
+</body>
+</html>
