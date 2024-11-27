@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선택하기</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='js/plotly-setup.js') }}"></script>
+</head>
+<body>
+    <h1 class="h1">선택하기</h1>
+    
+    <form action="/vote" method="post" class="image-form">
+        <input type="hidden" name="game" value="{{ game }}">
+        {% for image in images %}
+            <button type="submit" name="choice" value="{{ image }}" class="image-button" >
+                <img src="{{ url_for('static', filename='images/' + image) }}" alt="{{ image }}">
+            </button>
+        {% endfor %}
+    </form>
+
+<!-- 첫 번째 게임에서는 아무 버튼도 표시하지 않고, 그 외의 게임에서만 '뒤로 가기' 버튼 표시 -->
+{% if current_game_index == 0 %}
+    <p class="h1">현재 게임: {{ current_game_index + 1}} 번 째</p>
+{% else %}
+    <p class="h1">현재 게임: {{ current_game_index + 1}} 번 째</p>
+    <!-- 뒤로 가기 버튼을 가운데 정렬 -->
+    <form action="/back" method="post" style="text-align: center;">
+        <button type="submit" class="main-button">뒤로 가기</button>
+    </form>
+{% endif %}
+
+<div id="chart" style="width: 100%; height: auto;"></div>
+
+</body>
+</html>
